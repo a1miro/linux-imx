@@ -317,7 +317,7 @@ static int imx8mq_clocks_probe(struct platform_device *pdev)
 	struct device *dev = &pdev->dev;
 	struct device_node *np = dev->of_node;
 	void __iomem *base;
-	int err;
+	int err, i;
 
 	check_m4_enabled();
 
@@ -647,12 +647,18 @@ static int imx8mq_clocks_probe(struct platform_device *pdev)
 	/* enable all the clocks just for bringup */
 	imx_clk_init_on(np, hws);
 
-	clk_set_parent(hws[IMX8MQ_CLK_CSI1_CORE]->clk, hws[IMX8MQ_SYS1_PLL_266M]->clk);
-	clk_set_parent(hws[IMX8MQ_CLK_CSI1_PHY_REF]->clk, hws[IMX8MQ_SYS2_PLL_1000M]->clk);
-	clk_set_parent(hws[IMX8MQ_CLK_CSI1_ESC]->clk, hws[IMX8MQ_SYS1_PLL_800M]->clk);
-	clk_set_parent(hws[IMX8MQ_CLK_CSI2_CORE]->clk, hws[IMX8MQ_SYS1_PLL_266M]->clk);
-	clk_set_parent(hws[IMX8MQ_CLK_CSI2_PHY_REF]->clk, hws[IMX8MQ_SYS2_PLL_1000M]->clk);
-	clk_set_parent(hws[IMX8MQ_CLK_CSI2_ESC]->clk, hws[IMX8MQ_SYS1_PLL_800M]->clk);
+	check_assigned_clocks();
+
+	for (i = 0; i < ARRAY_SIZE(setup_clks); i++) {
+		if (setup_clks[i].clk) {
+			if (setup_clks[i].parent)
+				clk_set_parent(hws[setup_clks[i].clk]->clk,
+					       hws[setup_clks[i].parent]->clk);
+			if (setup_clks[i].rate)
+				clk_set_rate(hws[setup_clks[i].clk]->clk,
+					     setup_clks[i].rate);
+		}
+	}
 
 	imx_register_uart_clocks();
 

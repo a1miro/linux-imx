@@ -1,0 +1,38 @@
+/ {
+        panel_lvds: panel-lvds {
+                compatible = "panel-lvds";
+                status = "okay";
+                data-mapping = "jeida-24"; /* linux/documentation/devicetree/bindings/display/panel/lvds.yaml and spec sheet */
+                width-mm = <255>;
+                height-mm = <145>;
+                panel-timing {
+                        /* The closest available pclock, do not modify it */
+                        clock-frequency = <49500000>;
+                        hactive = <1024>;
+                        vactive = <600>;
+
+                        /* Horizontal Active Blanking Period = 320 */
+                        hsync-len    = <20>;
+                        hback-porch  = <150>;
+                        hfront-porch = <150>;
+
+                        /* Vertical Active Blanking Period = 35 */
+                        vsync-len    = <5>;
+                        vback-porch  = <20>;
+                        vfront-porch = <10>;
+
+                        /* DE Mode hsync/vsync=0 */
+                        hsync-active = <0>;
+                        vsync-active = <0>;
+
+                        /* Can be configure w/respect to datasheet */
+                        de-active = <1>;
+                        pixelclk-active = <0>;
+                };
+                port {
+                        lvds_panel_in: endpoint {
+                                remote-endpoint = <&lvds_out>;
+                        };
+                };
+        };
+};

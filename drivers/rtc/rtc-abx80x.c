@@ -19,53 +19,63 @@
 #include <linux/rtc.h>
 #include <linux/watchdog.h>
 
-#define ABX8XX_REG_HTH		0x00
-#define ABX8XX_REG_SC		0x01
-#define ABX8XX_REG_MN		0x02
-#define ABX8XX_REG_HR		0x03
-#define ABX8XX_REG_DA		0x04
-#define ABX8XX_REG_MO		0x05
-#define ABX8XX_REG_YR		0x06
-#define ABX8XX_REG_WD		0x07
+#define ABX8XX_REG_HTH                 0x00
+#define ABX8XX_REG_SC                  0x01
+#define ABX8XX_REG_MN                  0x02
+#define ABX8XX_REG_HR                  0x03
+#define ABX8XX_REG_DA                  0x04
+#define ABX8XX_REG_MO                  0x05
+#define ABX8XX_REG_YR                  0x06
+#define ABX8XX_REG_WD                  0x07
 
-#define ABX8XX_REG_AHTH		0x08
-#define ABX8XX_REG_ASC		0x09
-#define ABX8XX_REG_AMN		0x0a
-#define ABX8XX_REG_AHR		0x0b
-#define ABX8XX_REG_ADA		0x0c
-#define ABX8XX_REG_AMO		0x0d
-#define ABX8XX_REG_AWD		0x0e
+#define ABX8XX_REG_AHTH                        0x08
+#define ABX8XX_REG_ASC                 0x09
+#define ABX8XX_REG_AMN                 0x0a
+#define ABX8XX_REG_AHR                 0x0b
+#define ABX8XX_REG_ADA                 0x0c
+#define ABX8XX_REG_AMO                 0x0d
+#define ABX8XX_REG_AWD                 0x0e
 
-#define ABX8XX_REG_STATUS	0x0f
-#define ABX8XX_STATUS_AF	BIT(2)
-#define ABX8XX_STATUS_BLF	BIT(4)
-#define ABX8XX_STATUS_WDT	BIT(6)
+#define ABX8XX_REG_STATUS              0x0f
+#define ABX8XX_STATUS_AF               BIT(2)
+#define ABX8XX_STATUS_BLF              BIT(4)
+#define ABX8XX_STATUS_WDT              BIT(6)
 
-#define ABX8XX_REG_CTRL1	0x10
-#define ABX8XX_CTRL_WRITE	BIT(0)
-#define ABX8XX_CTRL_ARST	BIT(2)
-#define ABX8XX_CTRL_12_24	BIT(6)
+#define ABX8XX_REG_CTRL1               0x10
+#define ABX8XX_CTRL_WRITE              BIT(0)
+#define ABX8XX_CTRL_ARST               BIT(2)
+#define ABX8XX_CTRL_12_24              BIT(6)
 
-#define ABX8XX_REG_CTRL2	0x11
-#define ABX8XX_CTRL2_RSVD	BIT(5)
+#define ABX8XX_REG_CTRL2               0x11
+#define ABX8XX_CTRL2_RSVD              BIT(5)
 
-#define ABX8XX_REG_IRQ		0x12
-#define ABX8XX_IRQ_AIE		BIT(2)
-#define ABX8XX_IRQ_IM_1_4	(0x3 << 5)
+#define ABX8XX_REG_IRQ                 0x12
+#define ABX8XX_IRQ_AIE                 BIT(2)
+#define ABX8XX_IRQ_IM_1_4              (0x3 << 5)
 
-#define ABX8XX_REG_CD_TIMER_CTL	0x18
+#define ABX8XX_REG_SQW                 0x13
+#define ABX8XX_REG_SQW_MODE_BITS       5
+#define ABX8XX_REG_SQW_EN              BIT(7)
 
-#define ABX8XX_REG_OSC		0x1c
-#define ABX8XX_OSC_FOS		BIT(3)
-#define ABX8XX_OSC_BOS		BIT(4)
-#define ABX8XX_OSC_ACAL_512	BIT(5)
-#define ABX8XX_OSC_ACAL_1024	BIT(6)
+#define ABX8XX_REG_CAL_XT              0x14
+#define ABX8XX_REG_CAL_XT_CMDX_SHIFT   7
+#define ABX8XX_REG_CAL_XT_OFFSETX_MASK ((1 << (ABX8XX_REG_CAL_XT_CMDX_SHIFT)) - 1)
 
-#define ABX8XX_OSC_OSEL		BIT(7)
+#define ABX8XX_REG_CD_TIMER_CTL                0x18
 
-#define ABX8XX_REG_OSS		0x1d
-#define ABX8XX_OSS_OF		BIT(1)
-#define ABX8XX_OSS_OMODE	BIT(4)
+#define ABX8XX_REG_OSC                 0x1c
+#define ABX8XX_OSC_FOS                 BIT(3)
+#define ABX8XX_OSC_BOS                 BIT(4)
+#define ABX8XX_OSC_ACAL_512            BIT(5)
+#define ABX8XX_OSC_ACAL_1024           BIT(6)
+
+#define ABX8XX_OSC_OSEL                        BIT(7)
+
+#define ABX8XX_REG_OSS                 0x1d
+#define ABX8XX_OSS_OF                  BIT(1)
+#define ABX8XX_OSS_OMODE               BIT(4)
+#define ABX8XX_REG_OSS_XTCAL_SHIFT     6
+#define ABX8XX_REG_OSS_XTCAL_MASK      ((1 << (ABX8XX_REG_OSS_XTCAL_SHIFT)) - 1)
 
 #define ABX8XX_REG_WDT		0x1b
 #define ABX8XX_WDT_WDS		BIT(7)
@@ -78,6 +88,8 @@
 #define ABX8XX_REG_CFG_KEY	0x1f
 #define ABX8XX_CFG_KEY_OSC	0xa1
 #define ABX8XX_CFG_KEY_MISC	0x9d
+#define ABX8XX_REG_BATMODE     0x27
+#define ABX8XX_BATMODE_IOBM    BIT(7)
 
 #define ABX8XX_REG_ID0		0x28
 
@@ -182,22 +194,6 @@ static int abx80x_rtc_read_time(struct device *dev, struct rtc_time *tm)
 	unsigned char buf[8];
 	int err, flags, rc_mode = 0;
 
-	/* Read the Oscillator Failure only in XT mode */
-	rc_mode = abx80x_is_rc_mode(client);
-	if (rc_mode < 0)
-		return rc_mode;
-
-	if (!rc_mode) {
-		flags = i2c_smbus_read_byte_data(client, ABX8XX_REG_OSS);
-		if (flags < 0)
-			return flags;
-
-		if (flags & ABX8XX_OSS_OF) {
-			dev_err(dev, "Oscillator failure, data is invalid.\n");
-			return -EINVAL;
-		}
-	}
-
 	err = i2c_smbus_read_i2c_block_data(client, ABX8XX_REG_HTH,
 					    sizeof(buf), buf);
 	if (err < 0) {
@@ -212,6 +208,34 @@ static int abx80x_rtc_read_time(struct device *dev, struct rtc_time *tm)
 	tm->tm_mday = bcd2bin(buf[ABX8XX_REG_DA] & 0x3F);
 	tm->tm_mon = bcd2bin(buf[ABX8XX_REG_MO] & 0x1F) - 1;
 	tm->tm_year = bcd2bin(buf[ABX8XX_REG_YR]) + 100;
+
+	/* Read the Oscillator Failure only in XT mode */
+	rc_mode = abx80x_is_rc_mode(client);
+	if (rc_mode < 0)
+		return rc_mode;
+	
+	/* Compare the year value against this for data sanity check.
+	* In case of the battery goes flat, the year counter drops to 0x00 (tm_year = 100),
+	* whereas in case of oscillator glitch the year shall be over 2022
+	*/
+	#define YEAR_2022 122
+	if (!rc_mode) {
+		flags = i2c_smbus_read_byte_data(client, ABX8XX_REG_OSS);
+		if (flags < 0)
+			return flags;
+
+		if (flags & ABX8XX_OSS_OF) {
+			if (YEAR_2022 > tm->tm_year) {
+				dev_err(dev,
+					"Oscillator failure, data is invalid.\n");
+				return -EINVAL;
+			} else {
+				dev_warn(
+					dev,
+					"Failure flag set, data may be invalid.\n");
+			}
+		}
+	}
 
 	return 0;
 }
@@ -498,9 +522,235 @@ static ssize_t oscillator_show(struct device *dev,
 
 static DEVICE_ATTR_RW(oscillator);
 
+static int const xt_freq_nom = 32768000;
+
+static int xt_frequency_set(struct i2c_client *client,
+                               u32 xt_freq)
+{
+       int retval, flags;
+       u8 reg;
+
+       long Adj;
+       u8 XTCAL, CMDX, OFFSETX;
+
+       Adj = (xt_freq_nom - (int)xt_freq) * 16 / 1000;
+       if (Adj < -320 ) {
+               dev_err(&client->dev, "The XT oscillator is too fast to be adjusted\n");
+               return -ERANGE;
+       }
+       else if(Adj < -256 ) {
+               XTCAL = 3;
+               CMDX = 1;
+               OFFSETX = (Adj + 192) / 2;
+       }
+       else if(Adj < -192 ) {
+               XTCAL = 3;
+               CMDX = 0;
+               OFFSETX = Adj + 192;
+       }
+       else if(Adj < -128 ) {
+               XTCAL = 2;
+               CMDX = 0;
+               OFFSETX = Adj + 128;
+       }
+       else if(Adj < -64 ) {
+               XTCAL = 1;
+               CMDX = 0;
+               OFFSETX = Adj + 64;
+       }
+       else if(Adj < 64 ) {
+               XTCAL = 0;
+               CMDX = 0;
+               OFFSETX = Adj;
+       }
+       else if(Adj < 128 ) {
+               XTCAL = 0;
+               CMDX = 1;
+               OFFSETX = Adj / 2;
+       }
+       else {
+               dev_err(&client->dev, "The XT oscillator is too slow to be adjusted\n");
+               return -ERANGE;
+       }
+
+       reg = ABX8XX_REG_OSS;
+       retval = i2c_smbus_read_byte_data(client, reg);
+       if (retval < 0)
+               goto err;
+
+       flags = retval & ABX8XX_REG_OSS_XTCAL_MASK;
+       flags |= XTCAL << ABX8XX_REG_OSS_XTCAL_SHIFT;
+
+       retval = i2c_smbus_write_byte_data(client, reg, flags);
+       if (retval < 0)
+               goto err;
+
+       OFFSETX &= ABX8XX_REG_CAL_XT_OFFSETX_MASK;
+       OFFSETX |= CMDX << ABX8XX_REG_CAL_XT_CMDX_SHIFT;
+
+       reg = ABX8XX_REG_CAL_XT;
+       retval = i2c_smbus_write_byte_data(client, reg, OFFSETX);
+       if (retval < 0)
+               goto err;
+
+       return 0;
+err:
+       dev_err(&client->dev, "Failed to access register %x\n", reg);
+       return retval;
+
+}
+
+static ssize_t xt_frequency_store(struct device *dev,
+                               struct device_attribute *attr,
+                               const char *buf, size_t count)
+{
+       int retval;
+       unsigned long xt_freq;
+
+       retval = kstrtoul(buf, 10, &xt_freq);
+       if (retval < 0) {
+               dev_err(dev, "Invalid value of oscillator frequency\n");
+               return -EINVAL;
+       }
+
+       dev_info(dev,"xt osc drift is %li ppm\n", \
+                       1000000l * ((long)xt_freq - xt_freq_nom) / xt_freq_nom);
+
+       retval = xt_frequency_set(to_i2c_client(dev->parent), xt_freq);
+       if(retval)
+               return retval;
+       return count;
+}
+
+static DEVICE_ATTR_WO(xt_frequency);
+
+static ssize_t xt_calibration_show(struct device *dev,
+                               struct device_attribute *attr, char *buf)
+{
+       struct i2c_client *client = to_i2c_client(dev->parent);
+       u8 XTCAL, CMDX, OFFSETX;
+       int flags;
+
+       flags = i2c_smbus_read_byte_data(client, ABX8XX_REG_OSS);
+       if (flags < 0)
+               goto err;
+       XTCAL = flags >> ABX8XX_REG_OSS_XTCAL_SHIFT;
+       flags = i2c_smbus_read_byte_data(client, ABX8XX_REG_CAL_XT);
+       if (flags < 0)
+               goto err;
+       OFFSETX = flags & ABX8XX_REG_CAL_XT_OFFSETX_MASK;
+       CMDX = flags >> ABX8XX_REG_CAL_XT_CMDX_SHIFT;
+
+       return sprintf(buf, "XTCAL %x\nCMDX %x\nOFFSETX %x\n", XTCAL, CMDX, OFFSETX);
+err:
+       dev_err(dev, "Failed to read calibration data\n");
+       return sprintf(buf, "\n");
+       return flags;
+}
+static DEVICE_ATTR_RO(xt_calibration);
+
+#define SQFS_COUNT (1 << ABX8XX_REG_SQW_MODE_BITS)
+static char const *const SQFS[SQFS_COUNT] = { "1_century", "32768_Hz", "8192_Hz", "4096_Hz",
+                               "2048_Hz", "1024_Hz", "512_Hz", "256_Hz",
+                               "128_Hz", "64_Hz", "32_Hz", "16_Hz",
+                               "8_Hz", "4_Hz", "2_Hz", "1_Hz",
+                               "1/2_Hz", "1/4_Hz", "1/8_Hz", "1/16_Hz",
+                               "1/32_Hz", "1_min", "16384_Hz", "100_Hz",
+                               "1_hour", "1_day", "TIRQ", "nTIRQ",
+                               "1_year", "1_Hz_to_Counters", "1/32_Hz_from_Acal", "1/8_Hz_from_Acal",
+};
+
+static const bool valid_for_rc_mode [SQFS_COUNT] = { true, false, false, false,
+                               false, false, false, false,
+                               true, true, true, true,
+                               true, true, true, true,
+                               true, true, true, true,
+                               true, true, false, false,
+                               true, true, true, true,
+                               true, true, true, true,
+};
+
+static int sqw_set(struct i2c_client *client, const char *buf)
+{
+       int reg = i2c_smbus_read_byte_data(client, ABX8XX_REG_SQW);
+
+       if (sysfs_streq(buf, "none")) {
+               reg &= ~ABX8XX_REG_SQW_EN;
+               dev_info(&client->dev, "sqw output disabled\n");
+       }
+       else {
+               int idx = __sysfs_match_string(SQFS, SQFS_COUNT, buf);
+
+               if( 0 > idx )
+                       return idx;
+
+               if(abx80x_is_rc_mode(client) && !valid_for_rc_mode[idx])
+                       dev_warn(&client->dev, "sqw frequency %s is valid only in xt mode\n", SQFS[idx]);
+
+               dev_info(&client->dev, "sqw output enabled @ %s\n",SQFS[idx]);
+               reg &= ~((1 << ABX8XX_REG_SQW_MODE_BITS) - 1);
+               reg |= idx | ABX8XX_REG_SQW_EN;
+       }
+
+       reg = i2c_smbus_write_byte_data(client, ABX8XX_REG_SQW, reg);
+       if (reg < 0)
+               goto err;
+
+       return 0;
+err:
+       dev_err(&client->dev, "Failed to access register %x\n", ABX8XX_REG_SQW);
+       return reg;
+
+}
+
+static ssize_t sqw_store(struct device *dev,
+                               struct device_attribute *attr,
+                               const char *buf, size_t count)
+{
+       int retval;
+
+       retval = sqw_set(to_i2c_client(dev->parent), buf);
+       if(retval)
+               return retval;
+       else
+               return count;
+}
+
+static ssize_t sqw_show(struct device *dev,
+                              struct device_attribute *attr, char *buf)
+{
+       struct i2c_client *client = to_i2c_client(dev->parent);
+       int flags;
+       int len = 0;
+       int i;
+
+       flags = i2c_smbus_read_byte_data(client, ABX8XX_REG_SQW);
+       if (flags < 0) {
+               dev_err(dev, "Failed to read SQW\n");
+               return sprintf(buf, "\n");
+       }
+       if (flags & ABX8XX_REG_SQW_EN )
+               len += scnprintf(buf+len, PAGE_SIZE - len, "none ");
+       else
+               len += scnprintf(buf+len, PAGE_SIZE - len, "[none] ");
+
+       for(i = 0; SQFS_COUNT > i; ++i) {
+               if (flags | ABX8XX_REG_SQW_EN && i == (flags & ((1 << ABX8XX_REG_SQW_MODE_BITS) - 1)))
+                       len += scnprintf(buf+len, PAGE_SIZE - len, "[%s] ", SQFS[i]);
+               else
+                       len += scnprintf(buf+len, PAGE_SIZE - len, "%s ", SQFS[i]);
+       }
+       return len;
+}
+
+static DEVICE_ATTR_RW(sqw);
+
 static struct attribute *rtc_calib_attrs[] = {
 	&dev_attr_autocalibration.attr,
 	&dev_attr_oscillator.attr,
+	&dev_attr_sqw.attr,
+	&dev_attr_xt_calibration.attr,
+	&dev_attr_xt_frequency.attr,
 	NULL,
 };
 
@@ -685,6 +935,35 @@ static int abx80x_setup_watchdog(struct abx80x_priv *priv)
 }
 #endif
 
+/* Disable bus (i2c or SPI) when the RTC is powered from battery */
+static int abx80x_setup_brownout_bus_cutoff(struct i2c_client *client)
+{
+       int reg, val;
+
+       reg = ABX8XX_REG_BATMODE;
+       val = i2c_smbus_read_byte_data(client, reg);
+       if(0 > val)
+               goto err;
+
+       if(!(val & ABX8XX_BATMODE_IOBM))
+               return 0; //Already set
+
+       reg = ABX8XX_REG_CFG_KEY;
+       val = i2c_smbus_write_byte_data(client, reg, ABX8XX_CFG_KEY_MISC);
+       if (val < 0)
+               goto err;
+
+       reg = ABX8XX_REG_BATMODE;
+       val = i2c_smbus_write_byte_data(client, reg, 0);
+       if (val < 0)
+               goto err;
+
+       return 0;
+err:
+       dev_err(&client->dev, "Failed to access register %x err %i\n", reg, val);
+       return val;
+}
+
 static int abx80x_nvmem_xfer(struct abx80x_priv *priv, unsigned int offset,
 			     void *val, size_t bytes, bool write)
 {
@@ -775,6 +1054,8 @@ static int abx80x_probe(struct i2c_client *client)
 	unsigned int lot;
 	unsigned int wafer;
 	unsigned int uid;
+	const char *sqw_mode_name;
+	unsigned int xt_freq;
 
 	if (!i2c_check_functionality(client->adapter, I2C_FUNC_I2C))
 		return -ENODEV;
@@ -889,6 +1170,22 @@ static int abx80x_probe(struct i2c_client *client)
 		abx80x_enable_trickle_charger(client, trickle_cfg);
 	}
 
+	if (!of_property_read_u32(np, "xt-frequency", &xt_freq)) {
+		dev_info(&client->dev, "Calibrate XT %d mHz:\n", xt_freq);
+		xt_frequency_set(client, xt_freq);
+	} else {
+		xt_frequency_set(client, xt_freq_nom);
+	}
+
+	if (!of_property_read_string(np, "sqw", &sqw_mode_name))
+		sqw_set(client, sqw_mode_name);
+	else
+		sqw_set(client, "none");
+
+	err = abx80x_setup_brownout_bus_cutoff(client);
+	if (err)
+		return err;
+
 	err = i2c_smbus_write_byte_data(client, ABX8XX_REG_CD_TIMER_CTL,
 					BIT(2));
 	if (err)
@@ -936,6 +1233,8 @@ static int abx80x_probe(struct i2c_client *client)
 			err);
 		return err;
 	}
+	else
+		dev_err(&client->dev, "Create sysfs group: %d\n", 0);
 
 	return devm_rtc_register_device(priv->rtc);
 }

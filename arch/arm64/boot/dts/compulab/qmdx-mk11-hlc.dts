@@ -1,0 +1,364 @@
+#include "cl-som-imx8.dts"
+
+/ {
+	model = "QMDX Mk11 HLC";
+	compatible = "qmdx,mk11-dev", "compulab,sbc-imx8",
+		"compulab,cl-som-imx8,rev1.1", "compulab,cl-som-imx8", "fsl,imx8mq";
+
+	regulators {
+		reg_vm2_ssd: vm2_ssd {
+			compatible = "regulator-fixed";
+			pinctrl-names = "default";
+			pinctrl-0 = <&pinctrl_m2_ssd_reg>;
+			regulator-name = "+3.3_M.2";
+			regulator-min-microvolt = <3300000>;
+			regulator-max-microvolt = <3300000>;
+			gpio = <&gpio3 20 0>;
+			regulator-always-on;
+			enable-active-high;
+			off-on-delay = <10000>; // 10 milliseconds
+		};
+
+		hubpwren: hub-pwren {
+			compatible = "regulator-fixed";
+			pinctrl-names = "default";
+			pintrl-0 = <&pinctrl_hubpwren>;
+			regulator-name = "hub_pwren";
+			regulator-min-microvolt = <3300000>;
+			regulator-max-microvolt = <3300000>;
+			gpio = <&gpio3 3 GPIO_ACTIVE_HIGH>;
+			regulator-boot-on;
+			regulator-always-on;
+			enable-active-high;
+		};
+	};
+
+	backlight {
+		compatible = "pwm-backlight";
+		pinctrl-names = "default";
+		pinctrl-0 = <&pinctrl_backlight>;
+
+		pwms = <&pwm3 0 50000 0>;
+		// TODO define actual levels
+		brightness-levels = <0 4 8 16 32 64 128 255>;
+		default-brightness-level = <6>;
+
+		post-pwm-on-delay-ms = <10>;
+		enable-gpios = <&gpio4 16 0>;
+	};
+	pwmleds {
+		pinctrl-names = "default";
+		pinctrl-0 = <&pinctrl_statusled>;
+		ledpwm2 {
+			label = "qpoc-status";
+			pwms = <&pwm2 0 1000000 0>;
+			max-brightness = <100>;
+			active-low;
+		};
+	};
+};
+
+
+
+&gpio4 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_vchi>;
+};
+
+&iomuxc {
+	sb-imx8 {
+		pinctrl_backlight: backlightgrp {
+			fsl,pins = <
+				MX8MQ_IOMUXC_SAI1_TXD4_GPIO4_IO16 0x16
+			>;
+		};
+
+		pinctrl_vchi: vchigrp {
+			fsl,pins = <
+				MX8MQ_IOMUXC_SAI1_MCLK_GPIO4_IO20          0x00000016
+			>;
+		};
+
+		pinctrl_pwm1: pwm1grp {
+			fsl,pins = <
+				MX8MQ_IOMUXC_SPDIF_EXT_CLK_PWM1_OUT	0x16
+			>;
+		};
+
+		pinctrl_statusled: statusled {
+			fsl,pins = <
+				MX8MQ_IOMUXC_SPDIF_RX_PWM2_OUT	0x16
+			>;
+		};
+
+		pinctrl_mpcie_reg: mpcie_reggrp {
+			fsl,pins = <
+				MX8MQ_IOMUXC_SAI5_RXFS_GPIO3_IO19 0x16
+			>;
+		};
+		pinctrl_hubpwren: hubpweren_grp {
+			fsl,pins = <
+				MX8MQ_IOMUXC_NAND_CE2_B_GPIO3_IO3 0x17059
+			>;
+		};
+
+		pinctrl_m2_ssd_reg: m2_ssd_reggrp {
+			fsl,pins = <
+				MX8MQ_IOMUXC_SAI5_RXC_GPIO3_IO20 0x16
+			>;
+		};
+
+		pinctrl_pcie0: pcie0grp {
+			fsl,pins = <
+				MX8MQ_IOMUXC_I2C4_SCL_GPIO5_IO20    0x16 /* PCIE CLKREQ_B */
+				MX8MQ_IOMUXC_NAND_DATA02_GPIO3_IO8	0x16 /* reset */
+				MX8MQ_IOMUXC_NAND_DATA03_GPIO3_IO9	0x16 /* wake */
+			>;
+		};
+
+		pinctrl_pwm3: pwm3grp {
+			fsl,pins = <
+				MX8MQ_IOMUXC_SPDIF_TX_PWM3_OUT 0x16
+			>;
+		};
+
+		pinctrl_touchscreen: touchscreen {
+			fsl,pins = <
+				MX8MQ_IOMUXC_NAND_DATA05_GPIO3_IO11 0x17059
+				MX8MQ_IOMUXC_NAND_DATA06_GPIO3_IO12 0x17059
+			>;
+		};
+
+		pinctrl_uart1_rs485_hdx: uart1rs485hdxgrp {
+			fsl,pins = <
+				MX8MQ_IOMUXC_UART1_RXD_UART1_DCE_RX	0x79
+				MX8MQ_IOMUXC_UART1_TXD_UART1_DCE_TX	0x79
+			>;
+		};
+	};
+
+	cl-som-imx8 {
+		pinctrl_uart3: uart3grp {
+			fsl,pins = <
+				MX8MQ_IOMUXC_UART3_TXD_UART3_DCE_TX		0x49
+				MX8MQ_IOMUXC_UART3_RXD_UART3_DCE_RX		0x49
+			>;
+		};
+	};
+};
+
+&i2c1 {
+	status = "okay";
+
+	emc2305@4d {
+		compatible = "smsc,emc2305";
+		reg = <0x4d>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		fan@0 {
+			reg = <0>;
+			fan-div = <4>;
+			pwm-enable = <3>;
+		};
+		fan@1 {
+			reg = <1>;
+			fan-div = <4>;
+			pwm-enable = <3>;
+		};
+		fan@2 {
+			reg = <2>;
+			fan-div = <4>;
+			pwm-enable = <3>;
+		};
+	};
+
+	battery@b {
+		compatible = "sbs,sbs-battery";
+		reg = <0x0b>;
+		sbs,i2c-retry-count = <2>;
+		sbs,poll-retry-count = <10>;
+/*
+		sbs,battery-detect-gpios = <&gpio-controller 122 1>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&charger_pins>;
+*/
+	};
+
+	ltc4100@9 {
+	   compatible = "lltc,ltc4100", "sbs,sbs-charger";
+		reg = <0x09>;
+/*
+		interrupt-parent = <&gpio>;
+		interrupts = <7 IRQ_TYPE_LEVEL_LOW>;
+*/
+	};
+
+	energymonitor@18 {
+		compatible = "microchip,pac1934";
+		reg = <0x18>;
+		samp-rate = <64>;
+		status = "okay";
+
+		ch1: channel@0 {
+			uohms-shunt-res = <33000>; /* shunt resistor is 33 milliohm */
+			rail-name = "Backplane local regulators";
+			channel_enabled;
+		};
+
+		ch2: channel@1 {
+			uohms-shunt-res = <25000>; /* shunt resistor is 25 milliohm */
+			rail-name = "Heaters";
+			channel_enabled;
+		};
+
+		ch3: channel@2 {
+			uohms-shunt-res = <25000>; /*  shunt resistor is 25 milliohm */
+			rail-name = "CHI";
+			channel_enabled;
+		};
+
+		ch4: channel@3 {
+			uohms-shunt-res = <33000>; /* shunt resistor is 33 milli Ohm */
+			rail-name = "CSB";
+			channel_enabled;
+		};
+	};
+
+	backplane-enve@77 {
+		compatible = "bosch,bme280";
+		reg = <0x77>;
+	};
+};
+
+sbc_i2c_lvds: &i2c2 {
+	status = "okay";
+};
+
+&i2c3 {
+	status = "okay";
+
+	ilitek@41 {
+		compatible = "tchip,ilitek";
+		reg = <0x41>;
+
+		interrupt-parent = <&gpio3>;
+		interrupts = <3 IRQ_TYPE_EDGE_FALLING>;
+
+		pinctrl-names = "default";
+		pinctrl-0 = <&pinctrl_touchscreen>;
+
+		ilitek,irq-gpio = <&gpio3 11 GPIO_ACTIVE_HIGH>;
+		ilitek,reset-gpio = <&gpio3 12 GPIO_ACTIVE_HIGH>;
+
+		ilitek,vbus = "vcc_i2c";
+		ilitek,vdd = "vdd";
+		ilitek,name = "ilitek_i2c";
+
+		status = "okay";
+	};
+
+	csb-env@76 {
+		compatible = "bosch,bme280";
+		reg = <0x76>;
+	};
+
+	mma8451@1c {
+		compatible = "fsl,mma8451";
+		reg = <0x1c>;
+		interrupt-parent = <&gpio3>;
+		interrupts = <7 0>;
+		interrupt-names = "INT2";
+	};
+};
+
+&pcie0 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_pcie0>;
+	clkreq-gpio = <&gpio5 20 GPIO_ACTIVE_LOW>;
+	reset-gpio = <&gpio3 8 GPIO_ACTIVE_LOW>;
+	disable-gpio = <&gpio3 9 GPIO_ACTIVE_LOW>;
+	ext_osc = <1>;
+	hard-wired = <1>;
+	clocks = <&clk IMX8MQ_CLK_PCIE1_ROOT>,
+	         <&clk IMX8MQ_CLK_PCIE1_AUX>,
+	         <&clk IMX8MQ_CLK_PCIE1_PHY>,
+	         <&pcie0_refclk>;
+	clock-names = "pcie", "pcie_bus", "pcie_phy", "pcie_aux";
+	status = "okay";
+};
+
+/* Speaker */
+&pwm1 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_pwm1>;
+	status = "okay";
+};
+
+/* Status LED */
+&pwm2 {
+	status = "okay";
+};
+
+/* Screen backlight */
+&pwm3 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_pwm3>;
+	status = "okay";
+};
+
+/* Enable bluetooth */
+&reg_usb_mux {
+    enable-active-high;
+};
+
+/* Disabled audio */
+
+&sai2 {
+	status = "disabled";
+};
+
+&sai4 {
+	status = "disabled";
+};
+
+&simple_sound {
+	status = "disabled";
+};
+
+&spdif1 {
+	status = "disabled";
+};
+
+&spdif2 {
+	status = "disabled";
+};
+
+&wm8731 {
+	status = "disabled";
+};
+
+/* End disable audio */
+
+&uart1 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_uart1_rs485_hdx>;
+	assigned-clocks = <&clk IMX8MQ_CLK_UART1>;
+	assigned-clock-parents = <&clk IMX8MQ_CLK_25M>;
+	status = "okay";
+};
+
+// Chip detect and write protect not currently wired up
+&usdhc2 {
+	/delete-property/ cd-gpios;
+	/delete-property/ wp-gpios;
+	broken-cd;
+};
+
+/*
+ * These need to got at the end as they rely on a name
+ * defined above
+ */
+#include "compulab-imx8mq-lvds-mipi.dtsi"
+#include "compulab-imx8mq-mipi-dcss.dtsi"
+#include "panel-yes.dtsi"
