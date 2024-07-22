@@ -2266,7 +2266,7 @@ static int mcu_get_ctrl(struct i2c_client *client, uint32_t arg_ctrl_id,
 
 static void toggle_gpio(unsigned int gpio, int val)
 {
-	if (gpio_cansleep(gpio)){
+	if (gpiod_cansleep(gpio)){
 		gpio_direction_output(gpio,val);
 		gpio_set_value_cansleep(gpio, val);
 	} else{
@@ -3241,8 +3241,7 @@ static int ar0521_parse_and_get_gpios(struct device *dev)
  * @param adapter            struct i2c_adapter *
  * @return  Error code indicating success or failure
  */
-static int ar0521_probe(struct i2c_client *client,
-			const struct i2c_device_id *id)
+static int ar0521_probe(struct i2c_client *client)
 {
 	struct pinctrl *pinctrl;
 	struct device_node *node = client->dev.of_node;
