@@ -14,6 +14,7 @@
 
 /dts-v1/;
 
+#include <dt-bindings/usb/pd.h>
 #include "../freescale/imx8mq.dtsi"
 
 / {
@@ -27,8 +28,7 @@
 	};
 	
 	chosen {
-		bootargs = "console=ttymxc0,115200 earlycon=ec_imx6q,0x30860000,115200";
-		stdout-path = &uart3;
+		stdout-path = &uart1;
 	};
 
 	memory@40000000 {
