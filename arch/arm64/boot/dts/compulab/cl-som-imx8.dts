@@ -307,6 +307,13 @@
 			>;
 		};
 
+		pinctrl_uart1: uart1grp {
+			fsl,pins = <
+				MX8MQ_IOMUXC_UART1_TXD_UART1_DCE_TX		0x79
+				MX8MQ_IOMUXC_UART1_RXD_UART1_DCE_RX		0x79
+			>;
+		};
+
 		pinctrl_uart3: uart3grp {
 			fsl,pins = <
 				MX8MQ_IOMUXC_UART3_TXD_UART3_DCE_TX		0x79
@@ -623,6 +630,17 @@
     status = "disabled";
 };
 
+&uart1 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_uart1>;
+	assigned-clocks = <&clk IMX8MQ_CLK_UART1>;
+	assigned-clock-parents = <&clk IMX8MQ_CLK_25M>;
+	/delete-property/ dmas;
+	/delete-property/ dma-names;
+	status = "okay";
+};
+
+
 &uart3 { /* console */
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_uart3>;
@@ -632,6 +650,9 @@
 	/delete-property/ dma-names;
 	status = "okay";
 };
+
+
+
 
 &ecspi3 {
 	pinctrl-names = "default";
